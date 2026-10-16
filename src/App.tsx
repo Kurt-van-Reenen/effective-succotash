@@ -1,23 +1,23 @@
-import { AccountsPage } from "./features/accounts/AccountsPage";
+import { DashboardPage } from "./features/spending/DashboardPage";
 
 export function App() {
   return (
     <div className="app-shell">
       <header className="site-header">
-        <a className="brand" href="/" aria-label="Effective Succotash home">
+        <a className="brand" href="/" aria-label="Customer Spending Insights home">
           <span className="brand-mark" aria-hidden="true">
-            ES
+            CS
           </span>
-          <span>Effective Succotash</span>
+          <span>Customer insights</span>
         </a>
         <p className="environment-label">
-          {import.meta.env.VITE_ENABLE_MOCKS === "true" ? "Demo workspace" : "Workspace"}
+          {import.meta.env.VITE_ENABLE_MOCKS === "true" ? "Sample data" : "Live data"}
         </p>
       </header>
-      <main className="main-content">
-        <AccountsPage />
-      </main>
-      <footer className="site-footer">A thoughtfully simple starting point.</footer>
+      <div className="main-content">
+        <DashboardPage />
+      </div>
+      <footer className="site-footer">A clear view of your spending, all in one place.</footer>
     </div>
   );
 }

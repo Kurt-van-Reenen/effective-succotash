@@ -14,8 +14,10 @@ FROM dependencies AS build
 
 ARG VITE_ENABLE_MOCKS=true
 ARG VITE_API_BASE_URL=/api
+ARG VITE_CUSTOMER_ID=12345
 ENV VITE_ENABLE_MOCKS=${VITE_ENABLE_MOCKS}
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV VITE_CUSTOMER_ID=${VITE_CUSTOMER_ID}
 
 COPY . .
 RUN npm run build
@@ -30,4 +32,3 @@ EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1
-

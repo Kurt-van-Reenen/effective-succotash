@@ -5,6 +5,7 @@ services:
       args:
         VITE_ENABLE_MOCKS: ${VITE_ENABLE_MOCKS:-true}
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+        VITE_CUSTOMER_ID: ${VITE_CUSTOMER_ID:-12345}
     ports:
       - "8080:8080"
     restart: unless-stopped

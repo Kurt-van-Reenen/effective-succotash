@@ -1,12 +1,20 @@
+@import "./styles/tokens.css";
+
 :root {
-  font-family: "Segoe UI", sans-serif;
-  color: #17253c;
-  background: #f4f7fb;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: var(--color-text);
+  background: var(--color-background);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
   font-optical-sizing: auto;
   font-weight: 400;
 }
@@ -22,18 +30,40 @@ body {
 }
 
 button,
-a {
+input,
+select {
   font: inherit;
 }
 
-a {
-  color: #496aa3;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
+button,
+select,
+input {
+  min-height: 44px;
 }
 
-a:hover {
-  color: #294d86;
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+a {
+  color: var(--color-primary-dark);
+}
+
+:focus-visible {
+  outline: var(--focus-outline-width) solid var(--color-focus);
+  outline-offset: var(--focus-outline-offset);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
 }
 
 .app-shell {
@@ -44,234 +74,61 @@ a:hover {
 
 .site-header {
   display: flex;
-  min-height: 76px;
+  min-height: 68px;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #e7ebf2;
-  background: #fff;
-  padding: 0 7vw;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: 0 max(var(--space-4), calc((100vw - var(--layout-content-max)) / 2));
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  color: #17253c;
-  font-family: "Segoe UI", sans-serif;
-  font-size: 15px;
-  font-weight: 700;
+  gap: var(--space-3);
+  color: var(--color-navy);
+  font-size: var(--font-body);
+  font-weight: 750;
   text-decoration: none;
 }
 
 .brand-mark {
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   place-items: center;
-  border-radius: 11px;
-  background: #253e69;
-  color: #fff;
-  font-size: 11px;
-  letter-spacing: 0.04em;
+  border-radius: var(--radius-brand-mark);
+  background: var(--color-primary);
+  color: var(--color-white);
+  font-size: var(--font-small);
+  font-weight: 800;
 }
 
 .environment-label {
-  color: #66748a;
-  font-size: 13px;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-small);
 }
 
 .main-content {
-  width: min(100% - 40px, 1000px);
+  width: min(100% - 32px, var(--layout-content-max));
   flex: 1;
   align-self: center;
-  padding: 72px 0;
-}
-
-.accounts-section {
-  display: grid;
-  gap: 28px;
-}
-
-.section-heading {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 24px;
-}
-
-.eyebrow {
-  margin: 0 0 10px;
-  color: #6680a9;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
-
-h1,
-h2,
-p {
-  margin-top: 0;
-}
-
-h1,
-.account-details h2,
-.status-card h2 {
-  font-family: "Segoe UI", sans-serif;
-}
-
-h1 {
-  margin-bottom: 8px;
-  font-size: clamp(30px, 4vw, 38px);
-  letter-spacing: -0.04em;
-}
-
-.section-description {
-  margin-bottom: 0;
-  color: #64738a;
-  font-size: 15px;
-}
-
-.account-count {
-  margin-bottom: 3px;
-  color: #708099;
-  font-size: 13px;
-}
-
-.account-list {
-  display: grid;
-  gap: 12px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.account-card {
-  display: flex;
-  min-height: 92px;
-  align-items: center;
-  gap: 16px;
-  border: 1px solid #e8edf4;
-  border-radius: 16px;
-  background: #fff;
-  padding: 18px 22px;
-  box-shadow: 0 8px 24px rgb(30 52 84 / 3%);
-}
-
-.avatar {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 50%;
-  background: #edf2fa;
-  color: #41618f;
-  font-family: "Segoe UI", sans-serif;
-  font-weight: 700;
-}
-
-.account-details {
-  min-width: 0;
-  flex: 1;
-}
-
-.account-details h2 {
-  margin-bottom: 5px;
-  font-size: 15px;
-}
-
-.account-details a {
-  overflow-wrap: anywhere;
-  color: #75839a;
-  font-size: 13px;
-  text-decoration: none;
-}
-
-.account-status {
-  border-radius: 999px;
-  background: #edf7f2;
-  padding: 6px 10px;
-  color: #347456;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.status-card {
-  border: 1px solid #e4eaf2;
-  border-radius: 16px;
-  background: #fff;
-  padding: 28px;
-}
-
-.status-card h2 {
-  margin-bottom: 8px;
-  font-size: 16px;
-}
-
-.status-card p {
-  margin-bottom: 0;
-  color: #68778d;
-  font-size: 14px;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-
-.status-card--alert {
-  border-color: #f0d5d2;
-  background: #fffafa;
-}
-
-.secondary-button {
-  margin-top: 20px;
-  border: 1px solid #d4dce8;
-  border-radius: 9px;
-  background: #fff;
-  padding: 9px 14px;
-  color: #314c73;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.secondary-button:hover {
-  background: #f3f6fa;
-}
-
-.secondary-button:focus-visible,
-a:focus-visible {
-  outline: 3px solid #7aa1df;
-  outline-offset: 3px;
+  padding: var(--space-6) 0 var(--space-10);
 }
 
 .site-footer {
-  border-top: 1px solid #e7ebf2;
-  padding: 22px 7vw;
-  color: #8390a3;
-  font-size: 12px;
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-5) var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-small);
   text-align: center;
 }
 
-@media (max-width: 600px) {
-  .site-header {
-    min-height: 66px;
-    padding: 0 20px;
-  }
-
+@media (min-width: 768px) {
   .main-content {
-    padding: 48px 0;
-  }
-
-  .section-heading {
-    align-items: start;
-  }
-
-  .account-card {
-    gap: 12px;
-    padding: 16px;
-  }
-
-  .account-status {
-    align-self: start;
+    width: min(100% - 48px, var(--layout-content-max));
+    padding-top: var(--space-8);
   }
 }

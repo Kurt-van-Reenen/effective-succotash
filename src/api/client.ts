@@ -18,6 +18,12 @@ export async function getJson<TSchema extends z.ZodType>(
     );
   }
 
+  if (!(response.headers.get("content-type") ?? "").includes("json")) {
+    throw new Error(
+      `Expected JSON from ${url} but received ${response.headers.get("content-type") ?? "an unknown content type"}. Reload the page if the mock API stopped responding.`,
+    );
+  }
+
   const responseBody: unknown = await response.json();
   const result = schema.safeParse(responseBody);
 

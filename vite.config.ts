@@ -6,6 +6,7 @@ export default defineConfig(({ mode }) => {
   const environment = loadEnv(mode, process.cwd(), "VITE_");
   const enableMocks = environment.VITE_ENABLE_MOCKS ?? "true";
   const apiBaseUrl = environment.VITE_API_BASE_URL ?? "/api";
+  const customerId = environment.VITE_CUSTOMER_ID || "12345";
 
   if (enableMocks !== "true" && enableMocks !== "false") {
     throw new Error('VITE_ENABLE_MOCKS must be either "true" or "false".');
@@ -15,6 +16,7 @@ export default defineConfig(({ mode }) => {
     define: {
       "import.meta.env.VITE_ENABLE_MOCKS": JSON.stringify(enableMocks),
       "import.meta.env.VITE_API_BASE_URL": JSON.stringify(apiBaseUrl),
+      "import.meta.env.VITE_CUSTOMER_ID": JSON.stringify(customerId),
     },
     publicDir: enableMocks === "false" ? false : "public",
     plugins: [react()],

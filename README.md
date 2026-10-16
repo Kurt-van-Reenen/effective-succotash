@@ -1,31 +1,10 @@
-# Effective Succotash
+# Customer Spending Insights
 
-Effective Succotash is a small React and TypeScript application shell with an accounts list, an API boundary, and a realistic mock-backed workflow. It is designed as a starting point for a production application and runs in a hardened Nginx container with no backend required.
-
-## Architecture decisions
-
-- **Feature-based structure:** account screens and API functions live together under `src/features/accounts/`; reusable UI lives under `src/components/`.
-- **Single API boundary:** feature code calls typed API functions, not `fetch`. The shared API types are derived from Zod schemas, and every response is validated before it reaches the UI.
-- **MSW for realistic mocks:** Mock Service Worker intercepts the same `/accounts` request in development, tests, and the default production image. Its browser code is dynamically imported only when `VITE_ENABLE_MOCKS=true`.
-- **Hardened static hosting:** a multi-stage build keeps Node and development dependencies out of the final image. An unprivileged Nginx image serves the SPA with a health check, gzip, security headers, and fallback routing.
-
-## Prerequisites
-
-For the Docker workflow:
-
-- Docker Engine 24.0 or newer, or Docker Desktop 4.25.0 or newer.
-- Docker Compose plugin 2.20.0 or newer (`docker compose`).
-
-For local development:
-
-- Node.js 24.15.0 or newer in the 24.x LTS line.
-- npm 11.0.0 or newer.
-
-The Docker build pins Node.js 24.18.0 and the runtime image to `nginxinc/nginx-unprivileged:1.28.0-alpine`.
+Customer Spending Insights is a responsive React and TypeScript dashboard for exploring one customer's spending profile, trends, goals, categories, and transactions. It uses the existing Vite, Zod, MSW, Vitest, Docker, and Nginx setup. The default image includes realistic mock data and does not need a backend.
 
 ## Quick start
 
-From a terminal with Docker running:
+With Docker Engine and the Docker Compose plugin installed:
 
 ```sh
 git clone https://github.com/Kurt-van-Reenen/effective-succotash.git
@@ -33,118 +12,113 @@ cd effective-succotash
 docker compose up --build
 ```
 
-Open <http://localhost:8080>. The page shows three clearly labelled sample accounts served by MSW; no API server or Node.js installation is needed on the host. Stop the foreground service with `Ctrl+C`.
+Open <http://localhost:8080>. The page loads sample spending insights for customer `12345`. Stop the foreground service with `Ctrl+C`.
 
-## Build and run
+## Guided walkthrough
 
-Build the default image (mocks enabled):
+Follow the monthly spending trend from the screen to the response:
 
-```sh
-docker build -t effective-succotash .
-```
+1. [`DashboardPage.tsx`](./src/features/spending/DashboardPage.tsx) places the seven sections and owns the selected preset and custom date values.
+2. [`TrendsSection.tsx`](./src/features/spending/TrendsSection.tsx) renders the months selector and chart, and calls `useSpendingTrends(months)`.
+3. [`hooks.ts`](./src/features/spending/hooks.ts) creates a query key and calls the endpoint API function.
+4. [`api.ts`](./src/features/spending/api.ts) builds the customer endpoint URL and calls the shared JSON client.
+5. [`client.ts`](./src/api/client.ts) fetches the response and validates its shape using the endpoint's Zod schema in [`types.ts`](./src/api/types.ts).
+6. In the default build, MSW intercepts the request in [`handlers.ts`](./src/mocks/handlers.ts) and computes its response from deterministic API-shaped data in [`spending.ts`](./src/mocks/data/spending.ts). With mocks disabled, the request reaches the configured real API.
+7. The validated trends return through TanStack Query to the component, which renders the chart and its accessible data table.
 
-Run it with Docker:
-
-```sh
-docker run --rm -p 8080:8080 effective-succotash
-```
-
-Or build and start it with Compose:
-
-```sh
-docker compose up --build
-```
-
-Stop a Compose deployment with `docker compose down`. The container listens on port `8080`. To use a different host port with `docker run`, for example:
-
-```sh
-docker run --rm -p 8081:8080 effective-succotash
-```
-
-## Tests, lint, and formatting
-
-Run the tests inside Docker without installing Node.js on the host:
-
-```sh
-docker build --target test -t effective-succotash-test .
-```
-
-The test stage runs the suite during the image build and fails the build if a test fails.
-
-For local development, install Node.js and npm as listed above, then run:
-
-```sh
-npm ci
-npm test
-npm run lint
-npm run format:check
-```
-
-Run `npm run format` to format the project. `npm run build` type-checks TypeScript and creates the production bundle. `npm run dev` starts Vite with MSW enabled by default.
-
-## Switching to a real API
-
-The placeholder contract is `GET /accounts` returning a JSON object with an `accounts` array. Each entry has a non-empty `id`, a non-empty `name`, and a valid `email`, for example:
-
-```json
-{
-  "accounts": [
-    {
-      "id": "account-123",
-      "name": "Avery Example",
-      "email": "avery@example.com"
-    }
-  ]
-}
-```
-
-Build the image with the real API's HTTPS base URL and MSW disabled:
-
-```sh
-docker build --build-arg VITE_ENABLE_MOCKS=false --build-arg VITE_API_BASE_URL=https://api.example.com -t effective-succotash:real-api .
-docker run --rm -p 8080:8080 effective-succotash:real-api
-```
-
-The app requests `https://api.example.com/accounts`. The API must allow cross-origin requests from the app's origin. For Compose, set `VITE_ENABLE_MOCKS=false` and `VITE_API_BASE_URL=https://api.example.com` in a local `.env` file before running `docker compose up --build`. Vite settings are baked into the static bundle at build time; changing container runtime environment variables does not change them.
-
-To return to the sample API with Compose, set `VITE_ENABLE_MOCKS=true` and `VITE_API_BASE_URL=/api` in `.env`, then rebuild:
-
-```sh
-docker compose up --build
+```mermaid
+flowchart LR
+  Page[Dashboard page] --> Section[Trends section]
+  Section --> Hook[useSpendingTrends hook]
+  Hook --> Api[Typed API function]
+  Api --> Client[Shared fetch client]
+  Client --> Validate[Zod validation]
+  Validate -->|Mocks enabled| MSW[MSW handler and sample data]
+  Validate -->|Mocks disabled| RealAPI[Real API]
+  MSW --> UI[Query result and chart]
+  RealAPI --> UI
 ```
 
 ## Project structure
 
 ```text
 .
-├── .github/workflows/ci.yml       # Lint, tests, app build, and Docker build
+├── .github/workflows/ci.yml       # Lint, format check, tests, app build, Docker build
 ├── public/mockServiceWorker.js    # MSW browser worker
 ├── src/
-│   ├── api/                       # Shared response schemas, types, and client
-│   ├── components/                # Reusable UI components
-│   ├── features/accounts/         # Accounts API, page, and feature tests
-│   ├── mocks/data/                # Clearly labelled sample account data
-│   ├── mocks/                     # Browser MSW worker and request handlers
-│   └── test/                      # Test setup and MSW server
+│   ├── api/                       # Shared endpoint schemas, inferred types, fetch client
+│   ├── features/spending/         # Dashboard sections, endpoint hooks, API and formatters
+│   ├── mocks/data/spending.ts     # Replaceable sample customer, goals and transactions
+│   ├── mocks/handlers.ts          # Query-aware MSW endpoint behavior
+│   ├── styles/tokens.css          # Theme colors, spacing, radii, and type scale
+│   └── test/                      # Vitest and MSW test setup
 ├── Dockerfile
 ├── docker-compose.yml
 ├── nginx.conf
 └── vite.config.ts
 ```
 
+## Design tokens
+
+All theme colors, spacing, radii, and font sizes are CSS custom properties in [`tokens.css`](./src/styles/tokens.css). Change a token there to update its use across the dashboard; component layout and behavior stay in the feature CSS Module at [`Dashboard.module.css`](./src/features/spending/Dashboard.module.css). The interface uses a system font stack and makes no external font or CDN requests.
+
+The dashboard is mobile-first: transaction rows become stacked cards on narrow screens, and the layout expands to two-column tablet and multi-column desktop sections. Focus indicators and text labels accompany state colors.
+
 ## Configuration
 
-| Variable            | Default | Description                                                                                              |
-| ------------------- | ------- | -------------------------------------------------------------------------------------------------------- |
-| `VITE_ENABLE_MOCKS` | `true`  | Enables MSW when `true`; when `false`, mock startup and handlers are omitted from the production bundle. |
-| `VITE_API_BASE_URL` | `/api`  | API base path or absolute URL. The app appends `/accounts`.                                              |
+| Variable            | Default | Description                                                                           |
+| ------------------- | ------- | ------------------------------------------------------------------------------------- |
+| `VITE_ENABLE_MOCKS` | `true`  | Starts MSW and includes its browser worker when true. Set false for a real API build. |
+| `VITE_API_BASE_URL` | `/api`  | API origin/base path; the app appends `/customers/{customerId}/...`.                  |
+| `VITE_CUSTOMER_ID`  | `12345` | Customer identifier used in every endpoint path.                                      |
 
-Copy `.env.example` to `.env` when you want to set these values for Compose. Do not put secrets in Vite variables: values prefixed with `VITE_` are public and included in the browser bundle.
+Copy `.env.example` to `.env` to configure a Compose build. Vite variables are baked into the frontend at build time; changing a running container's environment does not change the bundle. Do not put secrets in `VITE_` variables because they are public in the browser.
 
-## Troubleshooting
+## Switching from mock data to a real API
 
-- **Port 8080 is already in use:** stop the process/container using it, or run the image with another host port, such as `docker run --rm -p 8081:8080 effective-succotash`. For Compose, change the host-side port in `docker-compose.yml` and rerun `docker compose up --build`.
-- **Docker is not running:** start Docker Desktop or the Docker Engine service, then retry `docker compose up --build`.
-- **Compose is unavailable:** install or update the Docker Compose plugin and confirm `docker compose version` works.
-- **A real API request fails in the browser:** check that the built image has `VITE_ENABLE_MOCKS=false`, the API URL is correct, the endpoint returns the documented JSON shape, and the API allows CORS from the app origin.
-- **The sample accounts do not appear:** wait for MSW's service worker to register, then refresh the page. Confirm the image was built with `VITE_ENABLE_MOCKS=true` and that the browser can load `/mockServiceWorker.js`.
+Build and run with a real API base URL:
+
+```sh
+docker build --build-arg VITE_ENABLE_MOCKS=false --build-arg VITE_API_BASE_URL=https://api.example.com/api --build-arg VITE_CUSTOMER_ID=12345 -t customer-spending:real-api .
+docker run --rm -p 8080:8080 customer-spending:real-api
+```
+
+The API must implement the seven endpoints in the supplied Customer Spending Insights API contract and return responses matching the schemas in [`types.ts`](./src/api/types.ts). It must allow CORS from the dashboard origin. When using Compose, set `VITE_ENABLE_MOCKS=false`, `VITE_API_BASE_URL=https://api.example.com/api`, and `VITE_CUSTOMER_ID=12345` in `.env`, then run `docker compose up --build`.
+
+To use local mock responses again, set `VITE_ENABLE_MOCKS=true` and `VITE_API_BASE_URL=/api` in `.env`, then rebuild with `docker compose up --build`.
+
+## API and mock behavior
+
+The shared API client is the only code that calls `fetch`; it rejects non-success responses and validates every successful response before UI components receive it. The category and transaction color fields must be six-digit hex values before they can be used as chart or icon colors.
+
+The deterministic mock contains 60 transactions across six categories and the last 12 calendar months. The handlers derive category summaries, period summaries, monthly trends, and filtered/sorted/paginated transactions from this data. The endpoint handlers honor presets, custom dates, category, sort order, limit, and offset where those parameters are defined.
+
+### Assumptions
+
+- A custom start/end date overrides the selected preset for category spending and transactions. The summary endpoint accepts only `period`, so its cards continue to use the selected preset while custom dates are active.
+- The custom end date is inclusive. A start date later than the end date blocks category and transaction requests and displays a validation message.
+- Trends are grouped by calendar month and do not use the custom filter, because the trends endpoint accepts only a month count. The sample history contains at most 12 months, so a 24-month request returns all available seeded months.
+- Goals are displayed as monthly budgets; the endpoint has no date or period parameter.
+- The transaction endpoint has no period parameter. With no explicit custom dates, it returns transactions from the full seeded history.
+- The API's `percentageUsed` controls each goal's progress; the bar is capped visually at 100%, while the displayed percentage retains the API value.
+- Known goal statuses are `on_track`, `warning`, and `over_budget`; any other value is shown with a neutral “Status unavailable” badge.
+- The customer profile's currency drives money formatting. ZAR is used until a profile response is available.
+- The `en-ZA` locale is used for currency and date formatting. Date-only values are interpreted in UTC to avoid timezone-dependent day changes.
+
+## Content Security Policy
+
+Nginx retains a restrictive same-origin script policy and the existing worker directives for MSW. The one additional relaxation is `style-src 'unsafe-inline'`: Recharts' responsive chart layout and the dashboard's validated API-driven category/progress styles require inline style attributes. No inline-script permission or external font/CDN source is enabled. The existing `connect-src 'self' https:` allowance supports HTTPS API endpoints when mocks are disabled.
+
+## Development and verification
+
+Prerequisites for local development are Node.js 24.15+ in the 24.x line and npm 11+. Docker builds use Node.js 24.18.0 and an unprivileged Nginx runtime.
+
+```sh
+npm ci
+npm test
+npm run lint
+npm run format:check
+npm run build
+```
+
+`npm run dev` starts Vite with mocks enabled by default. `npm run format` applies Prettier formatting. To run the test suite in the Docker test stage, use `docker build --target test -t customer-spending-test .`. CI runs lint, format check, tests, a production build, and a Docker image build.
