@@ -29,7 +29,9 @@ export function CategoriesSection({
     endDate || undefined,
     !invalidRange,
   );
-  const sortedCategories = [...(categories.data?.categories ?? [])].sort(
+  const sortedCategories = (categories.data?.categories ?? [])
+    .filter((category) => category.amount > 0)
+    .sort(
     (first, second) => second.amount - first.amount,
   );
 
