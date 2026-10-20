@@ -30,11 +30,13 @@ export function TransactionsSection({
   currency,
 }: TransactionsSectionProps) {
   const [category, setCategory] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("date_desc");
   const filters = useAvailableFilters();
   const result = useTransactions(
     sortBy,
     category,
+    paymentMethod,
     startDate || undefined,
     endDate || undefined,
     !invalidRange,
@@ -49,8 +51,7 @@ export function TransactionsSection({
     >
       <div className={styles.sectionTitle}>
         <div>
-          <p className={styles.eyebrow}>Recent activity</p>
-          <h2 id="transactions-heading">Transactions</h2>
+          <h2 id="transactions-heading">Recent Transactions</h2>
         </div>
       </div>
       <div className={styles.transactionControls}>
@@ -67,6 +68,23 @@ export function TransactionsSection({
             {(filters.data?.categories ?? []).map((item) => (
               <option key={item.name} value={item.name}>
                 {item.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className={styles.field}>
+          <span>Filter by type</span>
+          <select
+            aria-label="Filter transactions by type"
+            value={paymentMethod}
+            onChange={(event) => {
+              setPaymentMethod(event.target.value);
+            }}
+          >
+            <option value="">All types</option>
+            {(filters.data?.paymentMethods ?? []).map((method) => (
+              <option key={method} value={method}>
+                {method}
               </option>
             ))}
           </select>

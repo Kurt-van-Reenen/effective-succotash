@@ -48,6 +48,7 @@ export function getTransactions(
   offset: number,
   sortBy: SortBy,
   category?: string,
+  paymentMethod?: string,
   startDate?: string,
   endDate?: string,
 ) {
@@ -56,6 +57,7 @@ export function getTransactions(
     offset: String(offset),
     sortBy,
     category,
+    paymentMethod,
     startDate,
     endDate,
   });

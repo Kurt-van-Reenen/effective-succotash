@@ -50,14 +50,23 @@ export function useSpendingTrends(months: number) {
 export function useTransactions(
   sortBy: SortBy,
   category: string,
+  paymentMethod: string,
   startDate?: string,
   endDate?: string,
   enabled = true,
 ) {
   return useInfiniteQuery({
-    queryKey: ["transactions", sortBy, category, startDate, endDate],
+    queryKey: ["transactions", sortBy, category, paymentMethod, startDate, endDate],
     queryFn: ({ pageParam }) =>
-      getTransactions(transactionPageSize, pageParam, sortBy, category, startDate, endDate),
+      getTransactions(
+        transactionPageSize,
+        pageParam,
+        sortBy,
+        category,
+        paymentMethod,
+        startDate,
+        endDate,
+      ),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
       if (!lastPage.pagination.hasMore) {

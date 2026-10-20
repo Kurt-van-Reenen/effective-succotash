@@ -97,6 +97,7 @@ export const SpendingGoalsSchema = z.object({
 
 export const AvailableFiltersSchema = z.object({
   categories: z.array(CategorySchema),
+  paymentMethods: z.array(z.string().min(1)),
   dateRangePresets: z.array(
     z.object({
       label: z.string().min(1),

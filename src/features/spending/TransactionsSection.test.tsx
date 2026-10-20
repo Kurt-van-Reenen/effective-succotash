@@ -42,4 +42,27 @@ describe("TransactionsSection", () => {
       expect(getVisibleTransactionRows()).toHaveLength(20);
     });
   });
+
+  it("filters by transaction type", async () => {
+    const user = userEvent.setup();
+    const view = within(
+      renderWithQuery(
+        <TransactionsSection startDate="" endDate="" invalidRange={false} currency="ZAR" />,
+      ).container,
+    );
+
+    const typeFilter = view.getByLabelText("Filter transactions by type");
+    await view.findByRole("option", { name: "Debit Card" });
+    await user.selectOptions(typeFilter, "Debit Card");
+
+    await waitFor(() => {
+      const table = view.getByRole("table", { name: "Customer transactions" });
+      const rows = within(table).getAllByRole("row").slice(1);
+      expect(rows).toHaveLength(10);
+      for (const row of rows) {
+        expect(row).toHaveTextContent("Debit Card");
+        expect(row).not.toHaveTextContent("Credit Card");
+      }
+    });
+  });
 });

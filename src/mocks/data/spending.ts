@@ -107,6 +107,7 @@ export const spendingGoals: SpendingGoals = {
 
 export const availableFilters: AvailableFilters = {
   categories: categoryDetails,
+  paymentMethods: [...new Set(mockTransactions.map((transaction) => transaction.paymentMethod))],
   dateRangePresets: [
     { label: "Last 7 days", value: "7d" },
     { label: "Last 30 days", value: "30d" },
