@@ -231,21 +231,20 @@
 
 .summaryGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
 }
 
 .summaryCard {
   display: flex;
   min-width: 0;
-  min-height: 132px;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-2);
+  gap: var(--space-1);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-medium);
   background: var(--color-white);
-  padding: var(--space-4);
+  padding: var(--space-3);
 }
 
 .metricLabel {
@@ -575,7 +574,13 @@
   }
 
   .summaryGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .summaryCard {
+    min-height: 132px;
+    gap: var(--space-2);
+    padding: var(--space-4);
   }
 
   .categoryLayout {
