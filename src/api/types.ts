@@ -3,7 +3,7 @@ import { z } from "zod";
 const HexColorSchema = z.string().regex(/^#[\da-f]{6}$/i, "Expected a six-digit hex color.");
 
 const PeriodSchema = z.enum(["7d", "30d", "90d", "1y"]);
-const SortBySchema = z.enum(["date_desc", "date_asc", "amount_desc", "amount_asc"]);
+export type SortBy = "date_desc" | "date_asc" | "amount_desc" | "amount_asc";
 
 const CategorySchema = z.object({
   name: z.string().min(1),
@@ -106,7 +106,6 @@ export const AvailableFiltersSchema = z.object({
 });
 
 export type Period = z.infer<typeof PeriodSchema>;
-export type SortBy = z.infer<typeof SortBySchema>;
 export type Category = z.infer<typeof CategorySchema>;
 export type CustomerProfile = z.infer<typeof CustomerProfileSchema>;
 export type SpendingSummary = z.infer<typeof SpendingSummarySchema>;
