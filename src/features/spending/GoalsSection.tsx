@@ -34,7 +34,6 @@ export function GoalsSection({ currency }: GoalsSectionProps) {
     >
       <div className={styles.sectionTitle}>
         <div>
-          <p className={styles.eyebrow}>Stay on track</p>
           <h2 id="goals-heading">Spending goals</h2>
         </div>
       </div>

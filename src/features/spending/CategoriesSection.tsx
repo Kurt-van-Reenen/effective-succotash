@@ -40,7 +40,6 @@ export function CategoriesSection({
     >
       <div className={styles.sectionTitle}>
         <div>
-          <p className={styles.eyebrow}>Where it goes</p>
           <h2 id="categories-heading">Spending by category</h2>
         </div>
       </div>

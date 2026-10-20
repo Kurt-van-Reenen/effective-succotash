@@ -30,7 +30,6 @@ export function SummarySection({ period, currency }: SummarySectionProps) {
     <section className={styles.section} aria-labelledby="summary-heading">
       <div className={styles.sectionTitle}>
         <div>
-          <p className={styles.eyebrow}>At a glance</p>
           <h2 id="summary-heading">Spending summary</h2>
         </div>
       </div>

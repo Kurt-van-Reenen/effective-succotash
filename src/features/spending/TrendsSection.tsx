@@ -22,7 +22,6 @@ export function TrendsSection({ currency }: TrendsSectionProps) {
     >
       <div className={styles.sectionTitle}>
         <div>
-          <p className={styles.eyebrow}>Over time</p>
           <h2 id="trends-heading">Monthly trends</h2>
         </div>
         <label className={styles.compactField}>
@@ -58,7 +57,7 @@ export function TrendsSection({ currency }: TrendsSectionProps) {
             <ResponsiveContainer width="100%" height={290}>
               <BarChart
                 data={trends.data.trends}
-                margin={{ top: 10, right: 8, left: 2, bottom: 4 }}
+                margin={{ top: 10, right: 8, left: 0, bottom: 4 }}
               >
                 <CartesianGrid stroke="var(--color-border)" vertical={false} />
                 <XAxis
@@ -67,7 +66,8 @@ export function TrendsSection({ currency }: TrendsSectionProps) {
                   tick={{ fill: "var(--color-text-muted)", fontSize: 12 }}
                 />
                 <YAxis
-                  width={72}
+                  width={44}
+                  tickLine={false}
                   tickFormatter={(amount: number) =>
                     new Intl.NumberFormat("en-ZA", {
                       notation: "compact",

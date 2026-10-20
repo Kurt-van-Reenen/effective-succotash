@@ -31,7 +31,6 @@ export function FilterBar({
     <section className={styles.filterSection} aria-labelledby="filters-heading">
       <div className={styles.sectionTitle}>
         <div>
-          <p className={styles.eyebrow}>Explore</p>
           <h2 id="filters-heading">Date range</h2>
         </div>
       </div>

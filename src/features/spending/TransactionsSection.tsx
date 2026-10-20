@@ -165,7 +165,7 @@ export function TransactionsSection({
           </div>
           {result.hasNextPage && (
             <button
-              className={styles.buttonPrimary}
+              className={joinClasses(styles.buttonPrimary, styles.loadMoreButton)}
               type="button"
               onClick={() => void result.fetchNextPage()}
               disabled={result.isFetchingNextPage}
