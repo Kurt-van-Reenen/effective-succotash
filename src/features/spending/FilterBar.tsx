@@ -58,6 +58,7 @@ export function FilterBar({
               );
               if (selectedPeriod) {
                 onPeriodChange(selectedPeriod.value);
+                onClearDates();
               }
             }}
           >
