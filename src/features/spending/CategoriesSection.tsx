@@ -31,9 +31,7 @@ export function CategoriesSection({
   );
   const sortedCategories = (categories.data?.categories ?? [])
     .filter((category) => category.amount > 0)
-    .sort(
-    (first, second) => second.amount - first.amount,
-  );
+    .sort((first, second) => second.amount - first.amount);
 
   return (
     <section
