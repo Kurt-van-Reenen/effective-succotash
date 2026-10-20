@@ -2,8 +2,8 @@ import { z } from "zod";
 
 const HexColorSchema = z.string().regex(/^#[\da-f]{6}$/i, "Expected a six-digit hex color.");
 
-export const PeriodSchema = z.enum(["7d", "30d", "90d", "1y"]);
-export const SortBySchema = z.enum(["date_desc", "date_asc", "amount_desc", "amount_asc"]);
+const PeriodSchema = z.enum(["7d", "30d", "90d", "1y"]);
+const SortBySchema = z.enum(["date_desc", "date_asc", "amount_desc", "amount_asc"]);
 
 const CategorySchema = z.object({
   name: z.string().min(1),
