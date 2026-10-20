@@ -20,7 +20,7 @@ describe("DashboardPage", () => {
     expect(await findByRole("heading", { name: "John Doe" })).toBeInTheDocument();
     expect(await findByRole("alert")).toHaveTextContent("503");
     expect(await findByRole("heading", { name: "Spending goals" })).toBeInTheDocument();
-    expect(await findByRole("heading", { name: "Transactions" })).toBeInTheDocument();
+    expect(await findByRole("heading", { name: "Recent Transactions" })).toBeInTheDocument();
     expect((await findAllByText("Groceries")).length).toBeGreaterThan(0);
   });
 

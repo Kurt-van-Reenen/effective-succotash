@@ -59,6 +59,7 @@ describe("spending endpoint API functions", () => {
       http.get(getApiUrl("customers/:customerId/filters"), () =>
         HttpResponse.json({
           categories: [{ name: "Unsafe", color: "url(javascript:alert(1))", icon: "zap" }],
+          paymentMethods: ["Credit Card"],
           dateRangePresets: [{ label: "Last 30 days", value: "30d" }],
         }),
       ),

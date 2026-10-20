@@ -191,8 +191,11 @@ export const handlers = [
   http.get(getApiUrl("customers/:customerId/transactions"), ({ request }) => {
     const url = new URL(request.url);
     const category = url.searchParams.get("category");
+    const paymentMethod = url.searchParams.get("paymentMethod");
     const filteredTransactions = filterByOptionalDate(transactions, url).filter(
-      (transaction) => !category || transaction.category === category,
+      (transaction) =>
+        (!category || transaction.category === category) &&
+        (!paymentMethod || transaction.paymentMethod === paymentMethod),
     );
     const sortBy = getSortBy(url.searchParams.get("sortBy"));
     const limitValue = Number(url.searchParams.get("limit") ?? "20");
