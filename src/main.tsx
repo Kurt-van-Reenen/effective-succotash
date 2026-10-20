@@ -32,6 +32,15 @@ async function startApplication(): Promise<void> {
       },
       onUnhandledFrame: "bypass",
     });
+
+    // After a hard reload the page is not controlled by the worker, so /api calls
+    // would reach the server and return index.html. Reload once to get controlled.
+    if (!navigator.serviceWorker.controller && !sessionStorage.getItem("msw-reloaded")) {
+      sessionStorage.setItem("msw-reloaded", "1");
+      window.location.reload();
+      return;
+    }
+    sessionStorage.removeItem("msw-reloaded");
   }
 
   root.render(
