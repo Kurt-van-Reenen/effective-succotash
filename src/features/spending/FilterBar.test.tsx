@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { renderWithQuery } from "../../test/renderWithQuery";
@@ -41,5 +41,29 @@ describe("FilterBar", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(
       "The start date must be on or before the end date.",
     );
+  });
+
+  it("clears custom dates when the preset period changes", async () => {
+    const user = userEvent.setup();
+    const onPeriodChange = vi.fn();
+    const onClearDates = vi.fn();
+    const { container } = renderWithQuery(
+      <FilterBar
+        period="30d"
+        startDate="2024-02-01"
+        endDate="2024-02-10"
+        invalidRange={false}
+        onPeriodChange={onPeriodChange}
+        onStartDateChange={vi.fn()}
+        onEndDateChange={vi.fn()}
+        onClearDates={onClearDates}
+      />,
+    );
+
+    const view = within(container);
+    await view.findByRole("option", { name: "Last 7 days" });
+    await user.selectOptions(view.getByLabelText("Preset period"), "7d");
+    expect(onPeriodChange).toHaveBeenCalledWith("7d");
+    expect(onClearDates).toHaveBeenCalledTimes(1);
   });
 });
