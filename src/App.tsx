@@ -17,7 +17,6 @@ export function App() {
       <div className="main-content">
         <DashboardPage />
       </div>
-      <footer className="site-footer">A clear view of your spending, all in one place.</footer>
     </div>
   );
 }
