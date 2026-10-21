@@ -686,7 +686,11 @@
   .filterControls > button {
     align-self: end;
   }
+}
 
+/* Below 1024px the transactions column is too narrow for five table columns: amounts were
+   clipped and dates wrapped onto three lines. Tablets keep the stacked cards instead. */
+@media (min-width: 1024px) {
   .transactionControls {
     grid-template-columns: repeat(3, minmax(0, 220px));
   }
