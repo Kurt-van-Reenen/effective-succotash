@@ -43,6 +43,7 @@ export function TransactionsSection({
   );
   const entries = result.data?.pages.flatMap((page) => page.transactions) ?? [];
   const firstPageError = result.isError && entries.length === 0 ? result.error : null;
+  const paymentMethods = filters.data?.paymentMethods ?? [];
 
   return (
     <section
@@ -72,23 +73,25 @@ export function TransactionsSection({
             ))}
           </select>
         </label>
-        <label className={styles.field}>
-          <span>Filter by type</span>
-          <select
-            aria-label="Filter transactions by type"
-            value={paymentMethod}
-            onChange={(event) => {
-              setPaymentMethod(event.target.value);
-            }}
-          >
-            <option value="">All types</option>
-            {(filters.data?.paymentMethods ?? []).map((method) => (
-              <option key={method} value={method}>
-                {method}
-              </option>
-            ))}
-          </select>
-        </label>
+        {paymentMethods.length > 0 && (
+          <label className={styles.field}>
+            <span>Filter by type</span>
+            <select
+              aria-label="Filter transactions by type"
+              value={paymentMethod}
+              onChange={(event) => {
+                setPaymentMethod(event.target.value);
+              }}
+            >
+              <option value="">All types</option>
+              {paymentMethods.map((method) => (
+                <option key={method} value={method}>
+                  {method}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className={styles.field}>
           <span>Sort transactions</span>
           <select

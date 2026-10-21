@@ -97,7 +97,8 @@ export const SpendingGoalsSchema = z.object({
 
 export const AvailableFiltersSchema = z.object({
   categories: z.array(CategorySchema),
-  paymentMethods: z.array(z.string().min(1)),
+  // Extension to the API contract; a contract-only backend omits it.
+  paymentMethods: z.array(z.string().min(1)).default([]),
   dateRangePresets: z.array(
     z.object({
       label: z.string().min(1),
