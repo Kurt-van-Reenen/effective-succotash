@@ -2,6 +2,10 @@
 
 Customer Spending Insights is a responsive React and TypeScript dashboard for exploring one customer's spending profile, trends, goals, categories, and transactions. It uses the existing Vite, Zod, MSW, Vitest, Docker, and Nginx setup. The default image includes realistic mock data and does not need a backend.
 
+| Desktop (1280px)                                                  | Mobile (375px)                                                                            |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| ![Dashboard on desktop](./docs/screenshots/dashboard-desktop.png) | <img src="./docs/screenshots/dashboard-mobile.png" alt="Dashboard on mobile" width="260"> |
+
 ## Quick start
 
 With Docker Engine and the Docker Compose plugin installed:
@@ -43,7 +47,9 @@ flowchart LR
 
 ```text
 .
-├── .github/workflows/ci.yml       # Lint, format check, tests, app build, Docker build
+├── .github/workflows/ci.yml       # Lint, format, coverage, build, Docker build, browser tests
+├── docs/screenshots/              # README screenshots (npm run screenshots)
+├── e2e/                           # Playwright browser tests at mobile, tablet, and desktop widths
 ├── public/mockServiceWorker.js    # MSW browser worker
 ├── src/
 │   ├── api/                       # Shared endpoint schemas, inferred types, fetch client
@@ -145,25 +151,36 @@ npm run docker:up  # Same as docker compose up --build
 
 ## Testing
 
-Tests use Vitest, React Testing Library, and MSW. Components are rendered against the same mock handlers the browser uses, and individual tests override endpoints to cover failures, empty states, and invalid responses.
+The project has two test layers:
+
+- **Unit and component tests** (Vitest, React Testing Library, MSW) in `src/**/*.test.ts(x)`. Components are rendered against the same mock handlers the browser uses, and individual tests override endpoints to cover failures, empty states, and invalid responses.
+- **Browser tests** (Playwright) in [`e2e/`](./e2e/). These load the production build in Chromium at mobile (375px), tablet (768px), and desktop (1280px) widths. They check that every section renders, nothing scrolls horizontally, transactions switch between cards and a table at the tablet breakpoint, the charts draw and stay inside their containers, and the page loads with no console errors or blocked resources.
 
 Run the checks locally:
 
 ```sh
-npm test               # Run the test suite once
-npm run test:watch     # Re-run tests on change
+npm test               # Unit and component tests
+npm run test:watch     # Re-run unit tests on change
+npm run test:coverage  # Unit tests with a coverage report in coverage/index.html
+npm run test:e2e       # Browser tests against a fresh production build
 npm run lint
 npm run format:check
 npm run typecheck
 ```
 
-Run the test suite in Docker, with no local Node.js needed:
+Before the first browser test run, download Chromium with `npx playwright install chromium`. To run the browser tests against an app that is already running, such as the Docker container, set `PLAYWRIGHT_BASE_URL` (for example `PLAYWRIGHT_BASE_URL=http://localhost:8080 npm run test:e2e`).
+
+The coverage run fails if statements or lines drop below 85%, or branches or functions below 75%. Chart rendering callbacks are not reachable in jsdom, which has no layout, so the browser tests cover them instead.
+
+Run the unit tests in Docker, with no local Node.js needed:
 
 ```sh
 docker build --target test -t customer-spending-test .
 ```
 
-The build fails if any test fails. CI runs lint, format check, tests, a production build, and a Docker image build on every push and pull request.
+The build fails if any test fails. On every push and pull request, CI runs lint, format check, unit tests with coverage, a production build, and a Docker image build. It then starts that image and runs the browser tests against it, so the production Nginx headers and Content Security Policy are tested too. Coverage and (on failure) Playwright reports are uploaded as workflow artifacts.
+
+`npm run screenshots` regenerates the images at the top of this README.
 
 ## Error handling
 

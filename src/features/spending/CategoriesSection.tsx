@@ -124,8 +124,9 @@ export function CategoriesSection({
                   }))}
                   dataKey="amount"
                   nameKey="name"
-                  innerRadius={58}
-                  outerRadius={108}
+                  // Percentages of the available radius keep the ring inside narrow columns.
+                  innerRadius="54%"
+                  outerRadius="96%"
                   paddingAngle={2}
                   stroke="none"
                   label={renderSliceLabel}
