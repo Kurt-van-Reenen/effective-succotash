@@ -69,7 +69,7 @@ flowchart LR
 
 All theme colors, spacing, radii, and font sizes are CSS custom properties in [`tokens.css`](./src/styles/tokens.css). Change a token there to update its use across the dashboard; component layout and behavior stay in the feature CSS Module at [`Dashboard.module.css`](./src/features/spending/Dashboard.module.css). The interface uses a system font stack and makes no external font requests. Assets are self-hosted unless a CDN is configured (see [Serving assets from a CDN](#serving-assets-from-a-cdn)).
 
-The dashboard is mobile-first: transaction rows become stacked cards on narrow screens, and the layout expands to two-column tablet and multi-column desktop sections. Focus indicators and text labels accompany state colors.
+The dashboard is mobile-first: transaction rows become stacked cards on narrow screens, and the layout expands to two-column tablet and multi-column desktop sections. Focus indicators and text labels accompany state colors. The dashboard is tested against WCAG 2.2 AA (see [Testing](#testing)), and each chart has an accessible text alternative: a screen-reader table for the monthly trends and a text legend for the categories.
 
 ## Configuration
 
@@ -154,7 +154,7 @@ npm run docker:up  # Same as docker compose up --build
 The project has two test layers:
 
 - **Unit and component tests** (Vitest, React Testing Library, MSW) in `src/**/*.test.ts(x)`. Components are rendered against the same mock handlers the browser uses, and individual tests override endpoints to cover failures, empty states, and invalid responses.
-- **Browser tests** (Playwright) in [`e2e/`](./e2e/). These load the production build in Chromium at mobile (375px), tablet (768px), and desktop (1280px) widths. They check that every section renders, nothing scrolls horizontally, transactions switch between cards and a table at the tablet breakpoint, the charts draw and stay inside their containers, and the page loads with no console errors or blocked resources.
+- **Browser tests** (Playwright) in [`e2e/`](./e2e/). These load the production build in Chromium at mobile (375px), tablet (768px), and desktop (1280px) widths. They check that every section renders, nothing scrolls horizontally, transactions switch between cards and a table at the tablet breakpoint, the charts draw and stay inside their containers, and the page loads with no console errors or blocked resources. An [axe](https://github.com/dequelabs/axe-core) scan checks the loaded dashboard and the invalid date range state against WCAG 2.2 level A and AA at every width; a failure lists each rule, the affected elements, and a link explaining the fix.
 
 Run the checks locally:
 
