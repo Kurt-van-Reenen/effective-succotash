@@ -1,6 +1,6 @@
 # Customer Spending Insights
 
-Customer Spending Insights is a responsive React and TypeScript dashboard for exploring one customer's spending profile, trends, goals, categories, and transactions. It uses the existing Vite, Zod, MSW, Vitest, Docker, and Nginx setup. The default image includes realistic mock data and does not need a backend.
+Customer Spending Insights is a responsive dashboard for exploring one customer's spending profile, trends, goals, categories, and transactions. It is built with React 19 and TypeScript on Vite, uses TanStack Query for data fetching, Zod for response validation, and Recharts for charts, and ships as an unprivileged Nginx container. The default image serves realistic mock data through MSW and does not need a backend.
 
 | Desktop (1280px)                                                  | Mobile (375px)                                                                            |
 | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
@@ -17,6 +17,59 @@ docker compose up --build
 ```
 
 Open <http://localhost:8080>. The page loads sample spending insights for customer `12345`. Stop the foreground service with `Ctrl+C`.
+
+## Development
+
+Prerequisites for local development are Node.js 24.15+ in the 24.x line and npm 11+. Docker builds use Node.js 24.18.0 and an unprivileged Nginx runtime.
+
+```sh
+npm ci
+npm run dev        # Vite dev server with mocks enabled, at http://localhost:5173
+npm run build      # Type-check and produce the production bundle in dist/
+npm run docker:up  # Same as docker compose up --build
+```
+
+`npm run format` applies Prettier formatting.
+
+## Testing
+
+The project has two test layers.
+
+**Unit and component tests** (Vitest, React Testing Library, MSW) live next to the code as `src/**/*.test.ts(x)`. Components render against the same mock handlers the browser uses, and individual tests override endpoints to cover failures, empty states, and invalid responses.
+
+**Browser tests** (Playwright) in [`e2e/`](./e2e/) load the production build in Chromium at mobile (375px), tablet (768px), and desktop (1280px) widths. They check that:
+
+- every section renders and nothing scrolls horizontally;
+- transactions show as cards below 1024px and as a table from 1024px, and the table never needs sideways scrolling;
+- both charts draw and stay inside their containers;
+- the page loads with no console errors or blocked resources;
+- an [axe](https://github.com/dequelabs/axe-core) scan of the loaded dashboard and the invalid date range state finds no WCAG 2.2 level A or AA violations. A failure lists each rule, the affected elements, and a link explaining the fix.
+
+Run the checks locally:
+
+```sh
+npm test               # Unit and component tests
+npm run test:watch     # Re-run unit tests on change
+npm run test:coverage  # Unit tests with a coverage report in coverage/index.html
+npm run test:e2e       # Browser tests against a fresh production build
+npm run lint
+npm run format:check
+npm run typecheck
+```
+
+Before the first browser test run, download Chromium with `npx playwright install chromium`. To run the browser tests against an app that is already running, such as the Docker container, set `PLAYWRIGHT_BASE_URL` (for example `PLAYWRIGHT_BASE_URL=http://localhost:8080 npm run test:e2e`).
+
+The coverage run fails if statements or lines drop below 85%, or branches or functions below 75%. Chart rendering callbacks are not reachable in jsdom, which has no layout, so the browser tests cover them instead.
+
+Run the unit tests in Docker, with no local Node.js needed:
+
+```sh
+docker build --target test -t customer-spending-test .
+```
+
+The build fails if any test fails. On every push and pull request, CI runs lint, format check, unit tests with coverage, a production build, and a Docker image build. It then starts that image and runs the browser tests against it, so the production Nginx headers and Content Security Policy are tested too. Coverage and (on failure) Playwright reports are uploaded as workflow artifacts.
+
+`npm run screenshots` regenerates the images at the top of this README.
 
 ## Guided walkthrough
 
@@ -49,7 +102,7 @@ flowchart LR
 .
 ├── .github/workflows/ci.yml       # Lint, format, coverage, build, Docker build, browser tests
 ├── docs/screenshots/              # README screenshots (npm run screenshots)
-├── e2e/                           # Playwright browser tests at mobile, tablet, and desktop widths
+├── e2e/                           # Playwright browser and accessibility tests
 ├── public/mockServiceWorker.js    # MSW browser worker
 ├── src/
 │   ├── api/                       # Shared endpoint schemas, inferred types, fetch client
@@ -65,11 +118,31 @@ flowchart LR
 └── vite.config.ts
 ```
 
-## Design tokens
+## Decisions and trade-offs
+
+**Validate every API response at the boundary (Zod).** TypeScript types disappear at runtime, so a backend change could otherwise reach the UI as `undefined` or a wrong-shaped object. Each endpoint has one Zod schema; the TypeScript types are inferred from it, and the shared client rejects any response that doesn't match. The cost is a schema to maintain alongside the API contract. In return, a contract break shows as a clear, contained error in one section instead of a broken screen or a wrong figure.
+
+**Server state in TanStack Query, UI state in React.** Every section owns its query, so each one loads, fails, and retries independently, and one failing endpoint never blanks the dashboard. TanStack Query handles caching, de-duplication, and retries, so there's no hand-written loading state. The filters are plain `useState` in the page component, because they're shared by only a few siblings; a global store would add indirection for no gain at this size.
+
+**API-shaped mocks with MSW.** The mocks intercept real `fetch` calls rather than replacing the API layer, so the production code path (URL building, headers, validation, error handling) runs unchanged against mock data. The same handlers serve the browser and the unit tests. Switching to a real backend is a build setting, not a code change. The trade-off is that a mock build ships the MSW worker; it loads as a separate chunk and only when mocks are enabled.
+
+**Recharts for charts.** It's declarative React, which keeps chart code readable and testable. The trade-offs are bundle size (it is one of the heaviest dependencies) and its need for inline styles, which is why the CSP allows `style-src 'unsafe-inline'`. Both charts have text alternatives, so no information is available only visually.
+
+**CSS Modules and design tokens, no CSS-in-JS.** Styles compile to static CSS with no runtime cost, which keeps the CSP strict for scripts. Theme values live in one token file, so a rebrand is a single-file change.
+
+**Settings are fixed at build time.** Vite bakes `VITE_` variables into the bundle, so each environment needs its own image build. That's simple and has no runtime moving parts, but it doesn't fit a build-once, deploy-many pipeline. See [Known limitations and next steps](#known-limitations-and-next-steps).
+
+**Static files served by unprivileged Nginx.** The runtime image contains only the built assets and Nginx running as a non-root user, with security headers (CSP, `X-Frame-Options`, `nosniff`) and long-lived caching for content-hashed assets. There's no Node.js server to patch or scale.
+
+## Design, responsiveness, and accessibility
 
 All theme colors, spacing, radii, and font sizes are CSS custom properties in [`tokens.css`](./src/styles/tokens.css). Change a token there to update its use across the dashboard; component layout and behavior stay in the feature CSS Module at [`Dashboard.module.css`](./src/features/spending/Dashboard.module.css). The interface uses a system font stack and makes no external font requests. Assets are self-hosted unless a CDN is configured (see [Serving assets from a CDN](#serving-assets-from-a-cdn)).
 
 The dashboard is mobile-first. Sections sit side by side from 768px, and transactions are stacked cards below 1024px and a table from 1024px up, the width at which all five columns fit without clipping the amount. Focus indicators and text labels accompany state colors. The dashboard is tested against WCAG 2.2 AA (see [Testing](#testing)), and each chart has an accessible text alternative: a screen-reader table for the monthly trends and a text legend for the categories.
+
+## Error handling
+
+Each section loads independently, so a failed endpoint shows a retryable message in that section while the others keep working. Customers see a plain-language message; the technical detail (status code, URL, schema error) is logged to the browser console. An error boundary around the dashboard catches unexpected render errors and offers a reload instead of a blank page.
 
 ## Configuration
 
@@ -136,52 +209,16 @@ The deterministic mock contains 60 transactions across six categories and the la
 
 Nginx retains a restrictive same-origin script policy and the existing worker directives for MSW. The one additional relaxation is `style-src 'unsafe-inline'`: Recharts' responsive chart layout and the dashboard's validated API-driven category/progress styles require inline style attributes. No inline-script permission or external font source is enabled; a CDN origin is added only when `VITE_ASSET_BASE_URL` is an external URL. The existing `connect-src 'self' https:` allowance supports HTTPS API endpoints when mocks are disabled.
 
-## Development
+## Known limitations and next steps
 
-Prerequisites for local development are Node.js 24.15+ in the 24.x line and npm 11+. Docker builds use Node.js 24.18.0 and an unprivileged Nginx runtime.
+This is a single-customer demo. These are the changes needed before it could serve real customers, roughly in priority order:
 
-```sh
-npm ci
-npm run dev        # Vite dev server with mocks enabled, at http://localhost:5173
-npm run build      # Type-check and produce the production bundle in dist/
-npm run docker:up  # Same as docker compose up --build
-```
-
-`npm run format` applies Prettier formatting.
-
-## Testing
-
-The project has two test layers:
-
-- **Unit and component tests** (Vitest, React Testing Library, MSW) in `src/**/*.test.ts(x)`. Components are rendered against the same mock handlers the browser uses, and individual tests override endpoints to cover failures, empty states, and invalid responses.
-- **Browser tests** (Playwright) in [`e2e/`](./e2e/). These load the production build in Chromium at mobile (375px), tablet (768px), and desktop (1280px) widths. They check that every section renders, nothing scrolls horizontally, transactions switch from cards to a table at 1024px and the table never needs sideways scrolling, the charts draw and stay inside their containers, and the page loads with no console errors or blocked resources. An [axe](https://github.com/dequelabs/axe-core) scan checks the loaded dashboard and the invalid date range state against WCAG 2.2 level A and AA at every width; a failure lists each rule, the affected elements, and a link explaining the fix.
-
-Run the checks locally:
-
-```sh
-npm test               # Unit and component tests
-npm run test:watch     # Re-run unit tests on change
-npm run test:coverage  # Unit tests with a coverage report in coverage/index.html
-npm run test:e2e       # Browser tests against a fresh production build
-npm run lint
-npm run format:check
-npm run typecheck
-```
-
-Before the first browser test run, download Chromium with `npx playwright install chromium`. To run the browser tests against an app that is already running, such as the Docker container, set `PLAYWRIGHT_BASE_URL` (for example `PLAYWRIGHT_BASE_URL=http://localhost:8080 npm run test:e2e`).
-
-The coverage run fails if statements or lines drop below 85%, or branches or functions below 75%. Chart rendering callbacks are not reachable in jsdom, which has no layout, so the browser tests cover them instead.
-
-Run the unit tests in Docker, with no local Node.js needed:
-
-```sh
-docker build --target test -t customer-spending-test .
-```
-
-The build fails if any test fails. On every push and pull request, CI runs lint, format check, unit tests with coverage, a production build, and a Docker image build. It then starts that image and runs the browser tests against it, so the production Nginx headers and Content Security Policy are tested too. Coverage and (on failure) Playwright reports are uploaded as workflow artifacts.
-
-`npm run screenshots` regenerates the images at the top of this README.
-
-## Error handling
-
-Each section loads independently, so a failed endpoint shows a retryable message in that section while the others keep working. Customers see a plain-language message; the technical detail (status code, URL, schema error) is logged to the browser console. An error boundary around the dashboard catches unexpected render errors and offers a reload instead of a blank page.
+1. **Authentication.** The customer ID is a build setting and the API calls carry no credentials. In production the customer would come from an authenticated session (for example an OIDC token or a secure session cookie), never from a value the browser controls.
+2. **Configuration at deploy time.** Serve settings from a small `config.json` that the container writes at startup, so one tested image can be promoted through every environment instead of rebuilding per environment.
+3. **Error reporting.** Technical errors currently go to the browser console. Send them to a monitoring service, with customer data scrubbed, so failures are visible to the team rather than only to the customer.
+4. **Bundle size.** Everything except the mock worker ships in one 746 kB bundle (220 kB gzipped), which is over Vite's 500 kB warning limit. Lazy-loading the two chart sections would split out Recharts and let the summary, goals, and transactions render sooner on slow mobile connections.
+5. **Contract-driven schemas.** Generate the Zod schemas from an OpenAPI description of the API, so the frontend and backend can't drift silently, and add contract tests on both sides.
+6. **Filters in the URL.** Keep the period and filters in the query string, so a view can be bookmarked or shared and the back button behaves as expected.
+7. **Localisation.** Text is English-only and formatting is fixed to `en-ZA`. Extract strings for translation and format from the user's preferred language.
+8. **Supply-chain checks in CI.** Add `npm audit`, a container image scan, and automated dependency updates.
+9. **A stricter CSP.** Work towards removing `style-src 'unsafe-inline'`. Pinpoint which inline styles depend on it, move the dashboard's own dynamic colors into CSS, and then decide whether the chart library's remaining needs justify the allowance.
