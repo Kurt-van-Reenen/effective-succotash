@@ -277,8 +277,30 @@
 }
 
 .chartWrap {
+  position: relative;
   width: 100%;
   min-width: 0;
+}
+
+.chartCenter {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: var(--space-1);
+  text-align: center;
+  pointer-events: none;
+}
+
+.chartCenterLabel {
+  color: var(--color-text-muted);
+  font-size: var(--font-caption);
+}
+
+.chartCenterValue {
+  color: var(--color-navy);
+  font-size: var(--font-body);
+  font-weight: 700;
 }
 
 .categoryLegend {

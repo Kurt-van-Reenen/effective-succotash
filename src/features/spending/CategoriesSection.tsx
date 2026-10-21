@@ -1,5 +1,5 @@
 // Renders sorted category spending as a doughnut chart and text legend.
-import { Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Pie, PieChart, ResponsiveContainer, Tooltip, type PieLabelRenderProps } from "recharts";
 import type { Period } from "../../api/types";
 import { CategoryIcon } from "./Icons";
 import { formatMoney, formatPercentage } from "./format";
@@ -7,6 +7,51 @@ import { useSpendingCategories } from "./hooks";
 import { QueryFeedback } from "./QueryFeedback";
 import { joinClasses } from "./joinClasses";
 import styles from "./Dashboard.module.css";
+
+// Slices below this share are too narrow to fit a readable label.
+const MIN_LABELLED_PERCENTAGE = 5;
+const RADIAN = Math.PI / 180;
+
+// Picks dark or light text so slice labels stay readable on any category color.
+function getContrastingTextColor(hex: string): string {
+  const linearChannel = (start: number) => {
+    const channel = parseInt(hex.slice(start, start + 2), 16) / 255;
+    return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  };
+  const luminance =
+    0.2126 * linearChannel(1) + 0.7152 * linearChannel(3) + 0.0722 * linearChannel(5);
+  return luminance > 0.4 ? "#0b2545" : "#ffffff";
+}
+
+function renderSliceLabel({
+  cx,
+  cy,
+  midAngle,
+  innerRadius,
+  outerRadius,
+  payload,
+}: PieLabelRenderProps) {
+  const { percentage, color } = payload as { percentage: number; color: string };
+  if (percentage < MIN_LABELLED_PERCENTAGE) return null;
+
+  const radius = (innerRadius + outerRadius) / 2;
+  const angle = -(midAngle ?? 0) * RADIAN;
+
+  return (
+    <text
+      x={cx + radius * Math.cos(angle)}
+      y={cy + radius * Math.sin(angle)}
+      fill={getContrastingTextColor(color)}
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize={12}
+      fontWeight={700}
+      aria-hidden="true"
+    >
+      {formatPercentage(percentage)}
+    </text>
+  );
+}
 
 type CategoriesSectionProps = {
   period: Period;
@@ -32,6 +77,7 @@ export function CategoriesSection({
   const sortedCategories = (categories.data?.categories ?? [])
     .filter((category) => category.amount > 0)
     .sort((first, second) => second.amount - first.amount);
+  const totalSpent = formatMoney(categories.data?.totalAmount ?? 0, currency);
 
   return (
     <section
@@ -63,8 +109,12 @@ export function CategoriesSection({
           <div
             className={styles.chartWrap}
             role="img"
-            aria-label="Doughnut chart of spending by category. Category names, amounts, and percentages are listed in the legend."
+            aria-label={`Doughnut chart of spending by category, totalling ${totalSpent}. Category names, amounts, and percentages are listed in the legend.`}
           >
+            <div className={styles.chartCenter} aria-hidden="true">
+              <span className={styles.chartCenterLabel}>Total spent</span>
+              <span className={styles.chartCenterValue}>{totalSpent}</span>
+            </div>
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
                 <Pie
@@ -74,10 +124,12 @@ export function CategoriesSection({
                   }))}
                   dataKey="amount"
                   nameKey="name"
-                  innerRadius={68}
-                  outerRadius={105}
+                  innerRadius={58}
+                  outerRadius={108}
                   paddingAngle={2}
                   stroke="none"
+                  label={renderSliceLabel}
+                  labelLine={false}
                 />
                 <Tooltip formatter={(value) => formatMoney(Number(value), currency)} />
               </PieChart>
