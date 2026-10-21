@@ -126,7 +126,13 @@ export function TransactionsSection({
       />
       {entries.length > 0 && (
         <>
-          <div className={styles.transactionTableWrap}>
+          {/* Focusable so keyboard users can scroll the table when it is wider than the screen. */}
+          <div
+            className={styles.transactionTableWrap}
+            role="region"
+            aria-label="Transactions table"
+            tabIndex={0}
+          >
             <table className={styles.transactionTable}>
               <caption className={styles.visuallyHidden}>Customer transactions</caption>
               <thead>

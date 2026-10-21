@@ -6,7 +6,7 @@ export function App() {
   return (
     <div className="app-shell">
       <header className="site-header">
-        <a className="brand" href="/" aria-label="Customer Spending Insights home">
+        <a className="brand" href="/">
           <span className="brand-mark" aria-hidden="true">
             CS
           </span>
