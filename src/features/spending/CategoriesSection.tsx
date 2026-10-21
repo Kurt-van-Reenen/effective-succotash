@@ -20,7 +20,7 @@ function getContrastingTextColor(hex: string): string {
   };
   const luminance =
     0.2126 * linearChannel(1) + 0.7152 * linearChannel(3) + 0.0722 * linearChannel(5);
-  return luminance > 0.4 ? "#0b2545" : "#ffffff";
+  return luminance > 0.4 ? "#0a2160" : "#ffffff";
 }
 
 function renderSliceLabel({

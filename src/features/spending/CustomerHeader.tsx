@@ -1,5 +1,4 @@
-// Shows the customer's name, account type, and membership date.
-import { formatDate } from "./format";
+// Shows the customer's name, email, and account type.
 import { useCustomerProfile } from "./hooks";
 import { QueryFeedback } from "./QueryFeedback";
 import styles from "./Dashboard.module.css";
@@ -9,6 +8,11 @@ export function CustomerHeader() {
 
   return (
     <section className={styles.customerHeader} aria-labelledby="customer-heading">
+      <div className={styles.brandShapes} aria-hidden="true">
+        <span className={styles.shapeSky} />
+        <span className={styles.shapePill} />
+        <span className={styles.shapeRed} />
+      </div>
       <QueryFeedback
         title="Customer profile"
         loading={profile.isLoading}
@@ -20,13 +24,11 @@ export function CustomerHeader() {
       {profile.data && (
         <div className={styles.customerHeaderContent}>
           <div className={styles.customerIdentity}>
-            <p className={styles.eyebrow}>Customer spending insights</p>
             <h1 id="customer-heading">{profile.data.name}</h1>
             <p className={styles.customerEmail}>{profile.data.email}</p>
           </div>
           <div className={styles.customerDetails}>
             <span className={styles.accountType}>{profile.data.accountType} account</span>
-            <span>Member since {formatDate(profile.data.joinDate)}</span>
           </div>
         </div>
       )}

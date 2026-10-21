@@ -27,12 +27,55 @@
 }
 
 .customerHeader {
+  position: relative;
+  overflow: hidden;
   border: 0;
-  background: linear-gradient(120deg, var(--color-white), var(--color-primary-tint));
   padding: var(--space-6);
 }
 
+/* Decorative circle-and-pill motif from the brand imagery; hidden on narrow screens. */
+.brandShapes {
+  position: absolute;
+  top: 0;
+  right: var(--space-6);
+  bottom: 0;
+  display: none;
+  width: 9.5rem;
+  pointer-events: none;
+}
+
+.brandShapes span {
+  position: absolute;
+  display: block;
+  border-radius: var(--radius-pill);
+}
+
+.shapeSky {
+  top: var(--space-3);
+  left: 0;
+  width: 4rem;
+  height: 4rem;
+  background: var(--color-chart);
+}
+
+.shapePill {
+  top: calc(var(--space-6) * -1);
+  right: 0;
+  bottom: calc(var(--space-6) * -1);
+  width: 4rem;
+  background: var(--color-primary);
+}
+
+.shapeRed {
+  bottom: var(--space-3);
+  left: var(--space-2);
+  width: 3rem;
+  height: 3rem;
+  background: var(--color-accent);
+}
+
 .customerHeaderContent {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
@@ -67,15 +110,6 @@
   color: var(--color-primary-dark);
   font-weight: 700;
   text-transform: capitalize;
-}
-
-.eyebrow {
-  margin-bottom: var(--space-2);
-  color: var(--color-primary-dark);
-  font-size: var(--font-micro);
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 
 .sectionTitle {
@@ -461,7 +495,7 @@
 .progressBar {
   height: 100%;
   border-radius: inherit;
-  background: var(--color-primary);
+  background: var(--color-chart);
 }
 
 .transactionControls {
@@ -584,7 +618,12 @@
 }
 
 @media (min-width: 560px) {
+  .brandShapes {
+    display: block;
+  }
+
   .customerHeaderContent {
+    padding-right: 11rem;
     flex-direction: row;
     align-items: flex-end;
     justify-content: space-between;
