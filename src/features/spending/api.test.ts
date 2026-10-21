@@ -54,6 +54,20 @@ describe("spending endpoint API functions", () => {
     await expect(getCustomerProfile()).rejects.toThrow("Invalid API response");
   });
 
+  it("accepts a contract-only filters response without payment methods", async () => {
+    server.use(
+      http.get(getApiUrl("customers/:customerId/filters"), () =>
+        HttpResponse.json({
+          categories: [{ name: "Groceries", color: "#FF6B6B", icon: "shopping-cart" }],
+          dateRangePresets: [{ label: "Last 30 days", value: "30d" }],
+        }),
+      ),
+    );
+
+    const filters = await getAvailableFilters();
+    expect(filters.paymentMethods).toEqual([]);
+  });
+
   it("rejects unsafe API category colors", async () => {
     server.use(
       http.get(getApiUrl("customers/:customerId/filters"), () =>

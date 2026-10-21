@@ -1,8 +1,11 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
+import { getApiUrl } from "../../api/url";
 import { transactions } from "../../mocks/data/spending";
 import { renderWithQuery } from "../../test/renderWithQuery";
+import { server } from "../../test/server";
 import { TransactionsSection } from "./TransactionsSection";
 
 function getVisibleTransactionRows() {
@@ -51,7 +54,7 @@ describe("TransactionsSection", () => {
       ).container,
     );
 
-    const typeFilter = view.getByLabelText("Filter transactions by type");
+    const typeFilter = await view.findByLabelText("Filter transactions by type");
     await view.findByRole("option", { name: "Debit Card" });
     await user.selectOptions(typeFilter, "Debit Card");
 
@@ -64,5 +67,24 @@ describe("TransactionsSection", () => {
         expect(row).not.toHaveTextContent("Credit Card");
       }
     });
+  });
+
+  it("hides the type filter when the API provides no payment methods", async () => {
+    server.use(
+      http.get(getApiUrl("customers/:customerId/filters"), () =>
+        HttpResponse.json({
+          categories: [{ name: "Groceries", color: "#FF6B6B", icon: "shopping-cart" }],
+          dateRangePresets: [{ label: "Last 30 days", value: "30d" }],
+        }),
+      ),
+    );
+    const view = within(
+      renderWithQuery(
+        <TransactionsSection startDate="" endDate="" invalidRange={false} currency="ZAR" />,
+      ).container,
+    );
+
+    expect(await view.findByRole("option", { name: "Groceries" })).toBeInTheDocument();
+    expect(view.queryByLabelText("Filter transactions by type")).not.toBeInTheDocument();
   });
 });

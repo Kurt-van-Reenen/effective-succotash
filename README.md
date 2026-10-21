@@ -111,13 +111,14 @@ This rewrites asset URLs in `index.html` and the bundle, and adds the CDN origin
 
 The shared API client is the only code that calls `fetch`; it rejects non-success responses and validates every successful response before UI components receive it. The category and transaction color fields must be six-digit hex values before they can be used as chart or icon colors.
 
-The deterministic mock contains 60 transactions across six categories and the last 12 calendar months. The handlers derive category summaries, period summaries, monthly trends, and filtered/sorted/paginated transactions from this data. The endpoint handlers honor presets, custom dates, category, sort order, limit, and offset where those parameters are defined.
+The deterministic mock contains 60 transactions across six categories and the last 12 calendar months. The handlers derive category summaries, period summaries, monthly trends, and filtered/sorted/paginated transactions from this data. The endpoint handlers honor presets, custom dates, category, payment method, sort order, limit, and offset where those parameters are defined.
 
 ### Assumptions
 
 - A custom start/end date overrides the selected preset for category spending and transactions. The summary endpoint accepts only `period`, so its cards continue to use the selected preset while custom dates are active.
 - The custom end date is inclusive. A start date later than the end date blocks category and transaction requests and displays a validation message.
 - Trends are grouped by calendar month and do not use the custom filter, because the trends endpoint accepts only a month count. The sample history contains at most 12 months, so a 24-month request returns all available seeded months.
+- The dashboard extends the contract with an optional `paymentMethods` string array on the filters response and an optional `paymentMethod` parameter on the transactions endpoint. The mock implements both. A backend that follows the contract alone can omit `paymentMethods`; the transaction type filter is then hidden and `paymentMethod` is never sent.
 - Goals are displayed as monthly budgets; the endpoint has no date or period parameter.
 - The transaction endpoint has no period parameter. With no explicit custom dates, it returns transactions from the full seeded history.
 - The API's `percentageUsed` controls each goal's progress; the bar is capped visually at 100%, while the displayed percentage retains the API value.
