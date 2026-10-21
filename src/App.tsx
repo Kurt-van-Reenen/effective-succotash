@@ -1,4 +1,5 @@
 import capitecLogo from "./assets/capitec-logo.svg";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { DashboardPage } from "./features/spending/DashboardPage";
 
 export function App() {
@@ -14,7 +15,9 @@ export function App() {
         <img className="partner-logo" src={capitecLogo} alt="Capitec" />
       </header>
       <div className="main-content">
-        <DashboardPage />
+        <ErrorBoundary>
+          <DashboardPage />
+        </ErrorBoundary>
       </div>
     </div>
   );

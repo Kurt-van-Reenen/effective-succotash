@@ -130,16 +130,41 @@ The deterministic mock contains 60 transactions across six categories and the la
 
 Nginx retains a restrictive same-origin script policy and the existing worker directives for MSW. The one additional relaxation is `style-src 'unsafe-inline'`: Recharts' responsive chart layout and the dashboard's validated API-driven category/progress styles require inline style attributes. No inline-script permission or external font source is enabled; a CDN origin is added only when `VITE_ASSET_BASE_URL` is an external URL. The existing `connect-src 'self' https:` allowance supports HTTPS API endpoints when mocks are disabled.
 
-## Development and verification
+## Development
 
 Prerequisites for local development are Node.js 24.15+ in the 24.x line and npm 11+. Docker builds use Node.js 24.18.0 and an unprivileged Nginx runtime.
 
 ```sh
 npm ci
-npm test
-npm run lint
-npm run format:check
-npm run build
+npm run dev        # Vite dev server with mocks enabled, at http://localhost:5173
+npm run build      # Type-check and produce the production bundle in dist/
+npm run docker:up  # Same as docker compose up --build
 ```
 
-`npm run dev` starts Vite with mocks enabled by default. `npm run format` applies Prettier formatting. To run the test suite in the Docker test stage, use `docker build --target test -t customer-spending-test .`. CI runs lint, format check, tests, a production build, and a Docker image build.
+`npm run format` applies Prettier formatting.
+
+## Testing
+
+Tests use Vitest, React Testing Library, and MSW. Components are rendered against the same mock handlers the browser uses, and individual tests override endpoints to cover failures, empty states, and invalid responses.
+
+Run the checks locally:
+
+```sh
+npm test               # Run the test suite once
+npm run test:watch     # Re-run tests on change
+npm run lint
+npm run format:check
+npm run typecheck
+```
+
+Run the test suite in Docker, with no local Node.js needed:
+
+```sh
+docker build --target test -t customer-spending-test .
+```
+
+The build fails if any test fails. CI runs lint, format check, tests, a production build, and a Docker image build on every push and pull request.
+
+## Error handling
+
+Each section loads independently, so a failed endpoint shows a retryable message in that section while the others keep working. Customers see a plain-language message; the technical detail (status code, URL, schema error) is logged to the browser console. An error boundary around the dashboard catches unexpected render errors and offers a reload instead of a blank page.
