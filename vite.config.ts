@@ -30,8 +30,18 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: "jsdom",
       setupFiles: ["src/test/setup.ts"],
+      // Browser tests in e2e/ run under Playwright, not Vitest.
+      include: ["src/**/*.test.{ts,tsx}"],
       clearMocks: true,
       restoreMocks: true,
+      coverage: {
+        provider: "v8",
+        include: ["src/**/*.{ts,tsx}"],
+        exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/main.tsx", "src/mocks/browser.ts"],
+        reporter: ["text-summary", "text", "html"],
+        // A floor a few points below current coverage, so regressions fail CI without blocking refactors.
+        thresholds: { statements: 85, branches: 75, functions: 75, lines: 85 },
+      },
     },
   };
 });

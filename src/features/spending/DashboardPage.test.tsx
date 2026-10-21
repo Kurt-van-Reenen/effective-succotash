@@ -18,7 +18,9 @@ describe("DashboardPage", () => {
     const { findAllByText, findByRole } = renderWithQuery(<DashboardPage />);
 
     expect(await findByRole("heading", { name: "John Doe" })).toBeInTheDocument();
-    expect(await findByRole("alert")).toHaveTextContent("503");
+    const alert = await findByRole("alert");
+    expect(alert).toHaveTextContent("Spending summary could not be loaded.");
+    expect(alert).not.toHaveTextContent("503");
     expect(await findByRole("heading", { name: "Spending goals" })).toBeInTheDocument();
     expect(await findByRole("heading", { name: "Recent Transactions" })).toBeInTheDocument();
     expect((await findAllByText("Groceries")).length).toBeGreaterThan(0);

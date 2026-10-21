@@ -2,6 +2,10 @@
 
 Customer Spending Insights is a responsive React and TypeScript dashboard for exploring one customer's spending profile, trends, goals, categories, and transactions. It uses the existing Vite, Zod, MSW, Vitest, Docker, and Nginx setup. The default image includes realistic mock data and does not need a backend.
 
+| Desktop (1280px)                                                  | Mobile (375px)                                                                            |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| ![Dashboard on desktop](./docs/screenshots/dashboard-desktop.png) | <img src="./docs/screenshots/dashboard-mobile.png" alt="Dashboard on mobile" width="260"> |
+
 ## Quick start
 
 With Docker Engine and the Docker Compose plugin installed:
@@ -43,7 +47,9 @@ flowchart LR
 
 ```text
 .
-├── .github/workflows/ci.yml       # Lint, format check, tests, app build, Docker build
+├── .github/workflows/ci.yml       # Lint, format, coverage, build, Docker build, browser tests
+├── docs/screenshots/              # README screenshots (npm run screenshots)
+├── e2e/                           # Playwright browser tests at mobile, tablet, and desktop widths
 ├── public/mockServiceWorker.js    # MSW browser worker
 ├── src/
 │   ├── api/                       # Shared endpoint schemas, inferred types, fetch client
@@ -130,16 +136,52 @@ The deterministic mock contains 60 transactions across six categories and the la
 
 Nginx retains a restrictive same-origin script policy and the existing worker directives for MSW. The one additional relaxation is `style-src 'unsafe-inline'`: Recharts' responsive chart layout and the dashboard's validated API-driven category/progress styles require inline style attributes. No inline-script permission or external font source is enabled; a CDN origin is added only when `VITE_ASSET_BASE_URL` is an external URL. The existing `connect-src 'self' https:` allowance supports HTTPS API endpoints when mocks are disabled.
 
-## Development and verification
+## Development
 
 Prerequisites for local development are Node.js 24.15+ in the 24.x line and npm 11+. Docker builds use Node.js 24.18.0 and an unprivileged Nginx runtime.
 
 ```sh
 npm ci
-npm test
-npm run lint
-npm run format:check
-npm run build
+npm run dev        # Vite dev server with mocks enabled, at http://localhost:5173
+npm run build      # Type-check and produce the production bundle in dist/
+npm run docker:up  # Same as docker compose up --build
 ```
 
-`npm run dev` starts Vite with mocks enabled by default. `npm run format` applies Prettier formatting. To run the test suite in the Docker test stage, use `docker build --target test -t customer-spending-test .`. CI runs lint, format check, tests, a production build, and a Docker image build.
+`npm run format` applies Prettier formatting.
+
+## Testing
+
+The project has two test layers:
+
+- **Unit and component tests** (Vitest, React Testing Library, MSW) in `src/**/*.test.ts(x)`. Components are rendered against the same mock handlers the browser uses, and individual tests override endpoints to cover failures, empty states, and invalid responses.
+- **Browser tests** (Playwright) in [`e2e/`](./e2e/). These load the production build in Chromium at mobile (375px), tablet (768px), and desktop (1280px) widths. They check that every section renders, nothing scrolls horizontally, transactions switch between cards and a table at the tablet breakpoint, the charts draw and stay inside their containers, and the page loads with no console errors or blocked resources.
+
+Run the checks locally:
+
+```sh
+npm test               # Unit and component tests
+npm run test:watch     # Re-run unit tests on change
+npm run test:coverage  # Unit tests with a coverage report in coverage/index.html
+npm run test:e2e       # Browser tests against a fresh production build
+npm run lint
+npm run format:check
+npm run typecheck
+```
+
+Before the first browser test run, download Chromium with `npx playwright install chromium`. To run the browser tests against an app that is already running, such as the Docker container, set `PLAYWRIGHT_BASE_URL` (for example `PLAYWRIGHT_BASE_URL=http://localhost:8080 npm run test:e2e`).
+
+The coverage run fails if statements or lines drop below 85%, or branches or functions below 75%. Chart rendering callbacks are not reachable in jsdom, which has no layout, so the browser tests cover them instead.
+
+Run the unit tests in Docker, with no local Node.js needed:
+
+```sh
+docker build --target test -t customer-spending-test .
+```
+
+The build fails if any test fails. On every push and pull request, CI runs lint, format check, unit tests with coverage, a production build, and a Docker image build. It then starts that image and runs the browser tests against it, so the production Nginx headers and Content Security Policy are tested too. Coverage and (on failure) Playwright reports are uploaded as workflow artifacts.
+
+`npm run screenshots` regenerates the images at the top of this README.
+
+## Error handling
+
+Each section loads independently, so a failed endpoint shows a retryable message in that section while the others keep working. Customers see a plain-language message; the technical detail (status code, URL, schema error) is logged to the browser console. An error boundary around the dashboard catches unexpected render errors and offers a reload instead of a blank page.

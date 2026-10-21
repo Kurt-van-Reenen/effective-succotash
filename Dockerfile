@@ -23,7 +23,8 @@ ENV VITE_ASSET_BASE_URL=${VITE_ASSET_BASE_URL}
 
 COPY . .
 RUN npm run build
-RUN ASSET_ORIGIN="$(printf '%s' "$VITE_ASSET_BASE_URL" | sed -nE 's#^(https://[^/]+).*##p')"     && sed "s#__ASSET_ORIGIN__#${ASSET_ORIGIN:+ $ASSET_ORIGIN}#g" nginx.conf > nginx.generated.conf
+RUN ASSET_ORIGIN="$(printf '%s' "$VITE_ASSET_BASE_URL" | sed -nE 's#^(https://[^/]+).*#\1#p')" \
+    && sed "s#__ASSET_ORIGIN__#${ASSET_ORIGIN:+ $ASSET_ORIGIN}#g" nginx.conf > nginx.generated.conf
 
 FROM nginxinc/nginx-unprivileged:1.28.0-alpine AS runtime
 

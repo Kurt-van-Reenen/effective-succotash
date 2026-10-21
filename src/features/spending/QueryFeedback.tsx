@@ -1,5 +1,5 @@
 // Renders consistent loading, error, retry, and empty states for one section.
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { joinClasses } from "./joinClasses";
 import styles from "./Dashboard.module.css";
 
@@ -22,6 +22,13 @@ export function QueryFeedback({
   retry,
   children,
 }: QueryFeedbackProps) {
+  // Technical details (URLs, status codes, schema errors) go to the console, not the customer.
+  useEffect(() => {
+    if (error) {
+      console.error(`${title} request failed`, error);
+    }
+  }, [error, title]);
+
   if (loading) {
     return (
       <div className={styles.feedback} role="status">
@@ -35,7 +42,7 @@ export function QueryFeedback({
     return (
       <div className={joinClasses(styles.feedback, styles.feedbackError)} role="alert">
         <strong>{title} could not be loaded.</strong>
-        <span>{error.message}</span>
+        <span>Please try again. If the problem continues, reload the page.</span>
         <button className={styles.buttonSecondary} type="button" onClick={retry}>
           Try again
         </button>

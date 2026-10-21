@@ -3,3 +3,5 @@ dist
 coverage
 package-lock.json
 public/mockServiceWorker.js
+playwright-report
+test-results
