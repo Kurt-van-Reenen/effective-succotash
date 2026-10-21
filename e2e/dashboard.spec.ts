@@ -1,9 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
 
-const tableLayoutMinWidth = 768;
+// Layout breakpoints from Dashboard.module.css.
+const wideLayoutMinWidth = 768;
+const transactionTableMinWidth = 1024;
 
-function isTableLayout(page: Page): boolean {
-  return (page.viewportSize()?.width ?? 0) >= tableLayoutMinWidth;
+function viewportWidth(page: Page): number {
+  return page.viewportSize()?.width ?? 0;
 }
 
 test.beforeEach(async ({ page }) => {
@@ -35,14 +37,12 @@ test("fits the viewport without horizontal scrolling", async ({ page }) => {
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
-test("switches transactions between cards and a table at the tablet breakpoint", async ({
-  page,
-}) => {
+test("shows transactions as cards below 1024px and as a table above", async ({ page }) => {
   const transactions = page.getByRole("region", { name: "Recent Transactions" });
   const table = transactions.getByRole("table", { name: "Customer transactions" });
   const firstCard = transactions.getByRole("article").first();
 
-  if (isTableLayout(page)) {
+  if (viewportWidth(page) >= transactionTableMinWidth) {
     await expect(table).toBeVisible();
     await expect(firstCard).toBeHidden();
   } else {
@@ -60,7 +60,25 @@ test("places summary cards in one row only on wide screens", async ({ page }) =>
   );
   const rows = new Set(tops).size;
 
-  expect(rows).toBe(isTableLayout(page) ? 1 : 2);
+  expect(rows).toBe(viewportWidth(page) >= wideLayoutMinWidth ? 1 : 2);
+});
+
+test("fits the whole transaction table from the table breakpoint up", async ({ page }) => {
+  test.skip(viewportWidth(page) < transactionTableMinWidth, "Narrower screens show cards");
+
+  // Check the narrowest table width as well as this project's own width.
+  for (const width of [transactionTableMinWidth, viewportWidth(page)]) {
+    await page.setViewportSize({ width, height: 900 });
+    const table = page.getByRole("table", { name: "Customer transactions" });
+    await expect(table).toBeVisible();
+
+    const overflow = await table.evaluate((element) => {
+      const wrapper = element.parentElement;
+      return wrapper ? wrapper.scrollWidth - wrapper.clientWidth : 0;
+    });
+
+    expect(overflow, `table overflow at ${String(width)}px`).toBeLessThanOrEqual(0);
+  }
 });
 
 test("draws the monthly trend chart and redraws it for a longer range", async ({ page }) => {
