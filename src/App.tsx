@@ -1,3 +1,4 @@
+import capitecLogo from "./assets/capitec-logo.svg";
 import { DashboardPage } from "./features/spending/DashboardPage";
 
 export function App() {
@@ -8,11 +9,9 @@ export function App() {
           <span className="brand-mark" aria-hidden="true">
             CS
           </span>
-          <span>Customer insights</span>
+          <span>Customer Spending Insights</span>
         </a>
-        <p className="environment-label">
-          {import.meta.env.VITE_ENABLE_MOCKS === "true" ? "Sample data" : "Live data"}
-        </p>
+        <img className="partner-logo" src={capitecLogo} alt="Capitec" />
       </header>
       <div className="main-content">
         <DashboardPage />

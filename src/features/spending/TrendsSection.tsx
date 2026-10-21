@@ -1,6 +1,16 @@
 // Compares monthly spending totals in an accessible bar chart and data table.
 import { useState } from "react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Rectangle,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  type BarShapeProps,
+} from "recharts";
 import { formatMoney, formatMonth } from "./format";
 import { useSpendingTrends } from "./hooks";
 import { QueryFeedback } from "./QueryFeedback";
@@ -14,6 +24,7 @@ type TrendsSectionProps = {
 export function TrendsSection({ currency }: TrendsSectionProps) {
   const [months, setMonths] = useState(6);
   const trends = useSpendingTrends(months);
+  const lastIndex = (trends.data?.trends.length ?? 0) - 1;
 
   return (
     <section
@@ -83,8 +94,18 @@ export function TrendsSection({ currency }: TrendsSectionProps) {
                 <Bar
                   dataKey="totalSpent"
                   name="Total spent"
-                  fill="var(--color-primary)"
                   radius={[5, 5, 0, 0]}
+                  // Highlight the latest month so it stands out against earlier ones.
+                  shape={(props: BarShapeProps) => (
+                    <Rectangle
+                      {...props}
+                      fill={
+                        props.index === lastIndex
+                          ? "var(--color-primary)"
+                          : "var(--color-chart-muted)"
+                      }
+                    />
+                  )}
                 />
               </BarChart>
             </ResponsiveContainer>

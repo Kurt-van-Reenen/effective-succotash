@@ -99,16 +99,17 @@ p {
   height: 38px;
   place-items: center;
   border-radius: var(--radius-brand-mark);
-  background: var(--color-primary);
+  background: var(--color-accent);
   color: var(--color-white);
   font-size: var(--font-small);
   font-weight: 800;
 }
 
-.environment-label {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-small);
+.partner-logo {
+  display: block;
+  flex: none;
+  width: auto;
+  height: 1.25rem;
 }
 
 .main-content {
