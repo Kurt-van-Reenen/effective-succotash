@@ -47,6 +47,7 @@ flowchart LR
 ├── public/mockServiceWorker.js    # MSW browser worker
 ├── src/
 │   ├── api/                       # Shared endpoint schemas, inferred types, fetch client
+│   ├── assets/                    # Images imported by components (bundled and hashed)
 │   ├── features/spending/         # Dashboard sections, endpoint hooks, API and formatters
 │   ├── mocks/data/spending.ts     # Replaceable sample customer, goals and transactions
 │   ├── mocks/handlers.ts          # Query-aware MSW endpoint behavior
@@ -54,23 +55,24 @@ flowchart LR
 │   └── test/                      # Vitest and MSW test setup
 ├── Dockerfile
 ├── docker-compose.yml
-├── nginx.conf
+├── nginx.conf                     # CSP placeholder filled from VITE_ASSET_BASE_URL at Docker build
 └── vite.config.ts
 ```
 
 ## Design tokens
 
-All theme colors, spacing, radii, and font sizes are CSS custom properties in [`tokens.css`](./src/styles/tokens.css). Change a token there to update its use across the dashboard; component layout and behavior stay in the feature CSS Module at [`Dashboard.module.css`](./src/features/spending/Dashboard.module.css). The interface uses a system font stack and makes no external font or CDN requests.
+All theme colors, spacing, radii, and font sizes are CSS custom properties in [`tokens.css`](./src/styles/tokens.css). Change a token there to update its use across the dashboard; component layout and behavior stay in the feature CSS Module at [`Dashboard.module.css`](./src/features/spending/Dashboard.module.css). The interface uses a system font stack and makes no external font requests. Assets are self-hosted unless a CDN is configured (see [Serving assets from a CDN](#serving-assets-from-a-cdn)).
 
 The dashboard is mobile-first: transaction rows become stacked cards on narrow screens, and the layout expands to two-column tablet and multi-column desktop sections. Focus indicators and text labels accompany state colors.
 
 ## Configuration
 
-| Variable            | Default | Description                                                                           |
-| ------------------- | ------- | ------------------------------------------------------------------------------------- |
-| `VITE_ENABLE_MOCKS` | `true`  | Starts MSW and includes its browser worker when true. Set false for a real API build. |
-| `VITE_API_BASE_URL` | `/api`  | API origin/base path; the app appends `/customers/{customerId}/...`.                  |
-| `VITE_CUSTOMER_ID`  | `12345` | Customer identifier used in every endpoint path.                                      |
+| Variable              | Default | Description                                                                                                 |
+| --------------------- | ------- | ----------------------------------------------------------------------------------------------------------- |
+| `VITE_ENABLE_MOCKS`   | `true`  | Starts MSW and includes its browser worker when true. Set false for a real API build.                       |
+| `VITE_API_BASE_URL`   | `/api`  | API origin/base path; the app appends `/customers/{customerId}/...`.                                        |
+| `VITE_CUSTOMER_ID`    | `12345` | Customer identifier used in every endpoint path.                                                            |
+| `VITE_ASSET_BASE_URL` | `/`     | Where bundled JS, CSS, and images are loaded from. Set to an `https://` CDN URL to serve assets from a CDN. |
 
 Copy `.env.example` to `.env` to configure a Compose build. Vite variables are baked into the frontend at build time; changing a running container's environment does not change the bundle. Do not put secrets in `VITE_` variables because they are public in the browser.
 
@@ -86,6 +88,24 @@ docker run --rm -p 8080:8080 customer-spending:real-api
 The API must implement the seven endpoints in the supplied Customer Spending Insights API contract and return responses matching the schemas in [`types.ts`](./src/api/types.ts). It must allow CORS from the dashboard origin. When using Compose, set `VITE_ENABLE_MOCKS=false`, `VITE_API_BASE_URL=https://api.example.com/api`, and `VITE_CUSTOMER_ID=12345` in `.env`, then run `docker compose up --build`.
 
 To use local mock responses again, set `VITE_ENABLE_MOCKS=true` and `VITE_API_BASE_URL=/api` in `.env`, then rebuild with `docker compose up --build`.
+
+## Serving assets from a CDN
+
+Images live in [`src/assets/`](./src/assets/) and are imported by components, so Vite bundles them with the JS and CSS. Category icons come from `lucide-react` and are part of the JS bundle, and small decorative SVGs are inlined in CSS as `data:` URIs. Put new images in `src/assets/` and import them rather than using `public/`, so they pick up hashed filenames and the CDN prefix.
+
+Assets are self-hosted by default. Every bundled file under `dist/assets/` has a content-hashed name, and Nginx already serves `/assets/` with a one-year cache, so the container can act as the CDN's origin as-is.
+
+To switch to a CDN, build with its URL:
+
+```sh
+docker build --build-arg VITE_ASSET_BASE_URL=https://cdn.example.com/ -t customer-spending:cdn .
+```
+
+This rewrites asset URLs in `index.html` and the bundle, and adds the CDN origin to the CSP's `script-src`, `style-src`, and `img-src`. Then:
+
+- Point the CDN at this container (or upload `dist/assets/` to the matching path).
+- The CDN must send `Access-Control-Allow-Origin` for the dashboard origin, because Vite loads module scripts with `crossorigin`.
+- `index.html` and `mockServiceWorker.js` always stay on the dashboard origin; service workers cannot be cross-origin.
 
 ## API and mock behavior
 
@@ -107,7 +127,7 @@ The deterministic mock contains 60 transactions across six categories and the la
 
 ## Content Security Policy
 
-Nginx retains a restrictive same-origin script policy and the existing worker directives for MSW. The one additional relaxation is `style-src 'unsafe-inline'`: Recharts' responsive chart layout and the dashboard's validated API-driven category/progress styles require inline style attributes. No inline-script permission or external font/CDN source is enabled. The existing `connect-src 'self' https:` allowance supports HTTPS API endpoints when mocks are disabled.
+Nginx retains a restrictive same-origin script policy and the existing worker directives for MSW. The one additional relaxation is `style-src 'unsafe-inline'`: Recharts' responsive chart layout and the dashboard's validated API-driven category/progress styles require inline style attributes. No inline-script permission or external font source is enabled; a CDN origin is added only when `VITE_ASSET_BASE_URL` is an external URL. The existing `connect-src 'self' https:` allowance supports HTTPS API endpoints when mocks are disabled.
 
 ## Development and verification
 
